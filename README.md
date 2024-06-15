@@ -4,9 +4,10 @@ To visualise origin of text based on word origins
 
 ## Tool Prerequisite
 
-r-base
-r-jsonlite
-r-arrow
+base  
+jsonlite  
+arrow  
+purrr  
 
 ## DB prerequisite
 
