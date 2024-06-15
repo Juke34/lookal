@@ -7,7 +7,7 @@ To visualise origin of text based on word origins
 base  
 jsonlite  
 arrow  
-purrr  
+tidyverse  
 
 ## DB prerequisite
 
