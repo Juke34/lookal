@@ -4,6 +4,5 @@
 .httr-oauth
 .DS_Store
 .quarto
-country-by-languages.json
 etymology.parquet
 etymology.csv
