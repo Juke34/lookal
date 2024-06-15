@@ -2,6 +2,8 @@
 
 
 load_text <- function(sentence, pdf = FALSE, pdf_input){
+  # function to read in pdf file or text in a string. Both are checked for whether 
+  # the character vector is longer than 1 (due to quotation marks) and are then merged.
   if(pdf == TRUE){
     sentence <- pdftools::pdf_text(pdf_input)
   }
@@ -18,6 +20,8 @@ load_text <- function(sentence, pdf = FALSE, pdf_input){
 
 
 clean_text <- function(sentence){
+  # this function removes all punctuation and digits, to be left with the words.
+  # in addition, empty character strings are excluded  
   clean_sentence <- str_replace_all(sentence, pattern = "[[:punct:]]|[[:digit:]]", replacement = "")
   separate_sentence <- str_split_1(clean_sentence, pattern = "[[:space:]]") 
   sentence_list <- as.list(separate_sentence)
