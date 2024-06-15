@@ -9,6 +9,9 @@
 
 library(shiny)
 library(pdftools)
+library(leaflet)
+library(jsonlite)
+library(sf)
 
 # Define UI for application
 ui <- fluidPage(
@@ -30,6 +33,10 @@ ui <- fluidPage(
       }
       .submit-button {
         margin-top: 20px;
+      }
+      #map {
+        height: 600px; /* Height of the map */
+        margin-top: 20px; /* Margin to push the map below the inputs */
       }
     "))
   ),
@@ -72,8 +79,14 @@ ui <- fluidPage(
     )
   ),
 
-    
-  # Main panel to display outputs
+  # Map panel to display the map
+  fluidRow(
+    column(12,
+           leafletOutput("map", height = "600px") # Adjust the height as needed
+    )
+  ),
+  
+  # Output panel to display text results below the map
   fluidRow(
     column(12,
            h3("Output:"),
@@ -107,6 +120,17 @@ server <- function(input, output) {
   # Output the processed text
   output$displayText <- renderText({
     reactiveText()
+  })
+  
+  # Load GeoJSON data from URL
+  geojson_url <- "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
+  geojson_data <- st_read(geojson_url) # Read GeoJSON directly from the URL
+  
+  # Render the map with the GeoJSON data
+  output$map <- renderLeaflet({
+    leaflet() %>%
+      addTiles() %>%
+      addPolygons(data = geojson_data, fill = TRUE, fillColor = "blue", color = "white")
   })
   
 }
