@@ -1,7 +1,5 @@
 # File for functions to process the input
 
-setwd("C:/Users/inebo/Documents/PhD/RaukR/lookal")
-
 
 load_text <- function(sentence, pdf = FALSE, pdf_input){
   if(pdf == TRUE){
