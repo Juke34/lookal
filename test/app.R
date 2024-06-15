@@ -8,15 +8,15 @@
 #
 
 library(shiny)
-library(pdftools)
 library(leaflet)
-library(jsonlite)
-library(sf)
+library(pdftools)
+library(jsonlite) # Needed for parsing JSON
+library(sf) # Needed for reading GeoJSON data
 
 # Define UI for application
 ui <- fluidPage(
-
-  # Custom CSS to centralize and make inputs bigger
+  
+  # Custom CSS to centralize and style inputs
   tags$head(
     tags$style(HTML("
       .center-content {
@@ -40,16 +40,16 @@ ui <- fluidPage(
       }
     "))
   ),
-  # Application title
-  titlePanel("Team Lookal"),
   
-
+  # Application title
+  titlePanel("Text or PDF Uploader with World Map Background"),
+  
   # Centralized layout for inputs
   fluidRow(
     column(12,
            div(class = "center-content",
                # Input: Select between text and PDF
-               div(style = "width: 200%; max-width: 300px; margin-top: 10px;",
+               div(style = "width: 80%; max-width: 600px; margin-top: 10px;",
                    selectInput("input_type", "Choose Input Type:", 
                                choices = c("Text" = "text", "PDF" = "pdf"),
                                selected = "text")
@@ -58,8 +58,8 @@ ui <- fluidPage(
                # Conditional input: Text area for text input
                conditionalPanel(
                  condition = "input.input_type == 'text'",
-                 div(style = "width: 150%; max-width: 600px; margin-top: 10px;",
-                     textAreaInput("text", "Your text:", "", rows = 3, resize = "vertical", placeholder = "Please enter your text here!")
+                 div(style = "width: 80%; max-width: 600px; margin-top: 10px;",
+                     textAreaInput("text", "Enter text:", "", rows = 5)
                  )
                ),
                
@@ -78,7 +78,7 @@ ui <- fluidPage(
            )
     )
   ),
-
+  
   # Map panel to display the map
   fluidRow(
     column(12,
@@ -95,9 +95,8 @@ ui <- fluidPage(
   )
 )
 
-
 # Define server logic
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   # Reactive value to store the uploaded or entered text
   reactiveText <- reactiveVal("")
@@ -130,12 +129,10 @@ server <- function(input, output) {
   output$map <- renderLeaflet({
     leaflet() %>%
       addTiles() %>%
-      addPolygons(data = geojson_data, fill = TRUE, fillColor = "red", color = "white")
+      addPolygons(data = geojson_data, fill = TRUE, fillColor = "blue", color = "white")
   })
   
 }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
-
