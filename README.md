@@ -8,6 +8,7 @@ base
 jsonlite  
 arrow  
 tidyverse  
+textreadr  
 
 ## DB prerequisite
 
