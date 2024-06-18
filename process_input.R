@@ -110,3 +110,7 @@ process_text <- function(sentence = "", et = etymology, co = country_by_language
   return(res)
  # return(not_found)
 }
+
+
+world_sf <- read_sf("data/world_shape/TM_WORLD_BORDERS_SIMPL-0.3.shp")
+world_sf <- world_sf %>%  mutate(Count = 0)
