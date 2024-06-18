@@ -1,5 +1,10 @@
 # --- parameters ----
+## --- lang file ---
 tsv_lang_file <- "data/country-by-languages.tsv"
+# json_lang_file <- "data/countries.json"
+## --- etymology file ---
+csv_etymology_file <- "data/test_etymology_10000.csv"
+# parquet_etymology_file <- "data/etymology.parquet"
 
 # ---- File for functions to process the input -----
 
@@ -39,9 +44,8 @@ clean_text <- function(sentence){
 
 # 'Parquet' is a columnar storage file format. 
 # This function enables you to read Parquet files into R.
-#parquet_file <- "data/etymology.parquet"
 #etymology <- read_parquet(
-#  parquet_file,
+#  parquet_etymology_file,
 #  col_select = NULL,
 #  as_data_frame = TRUE,
 #  props = ParquetArrowReaderProperties$create(),
@@ -51,16 +55,14 @@ clean_text <- function(sentence){
 ## ------ Using CSV input file ------------
 
 # Get content into a data frame from CSV file
-json_file <- "data/test_etymology_10000.csv"
-etymology <- read.csv(json_file,
+etymology <- read.csv(csv_etymology_file,
                       header = TRUE, sep = ",")
 
 #-------- Get country-by-language data ------------
 
 ## -----  from json file ----
-country_by_languages <- jsonlite::fromJSON("data/countries.json")
-country_by_languages <- as.data.frame(country_by_languages)
-View(country_by_languages)
+#country_by_languages <- jsonlite::fromJSON(json_lang_file)
+#country_by_languages <- as.data.frame(country_by_languages)
 
 ## -----  from tsv file ----
 country_by_languages <- read.csv(tsv_lang_file,
