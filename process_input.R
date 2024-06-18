@@ -105,5 +105,6 @@ process_text <- function(sentence = "", et = etymology, co = country_by_language
     not_found <- names(which(map_lgl(idx, ~ .x)))
   }
   
-  return(res, not_found)
+  return(res)
+ # return(not_found)
 }
