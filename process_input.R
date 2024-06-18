@@ -101,6 +101,7 @@ process_text <- function(sentence = "", et = etymology, co = country_by_language
     as.data.frame()
   colnames(res) <- c("iso", "count")
   
+  # keep track of words that do not match any country name 
   if(not_fo == TRUE){
     idx <- map(var, function(x) nrow(x) < 1)
     not_found <- names(which(map_lgl(idx, ~ .x)))
