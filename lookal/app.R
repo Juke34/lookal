@@ -63,7 +63,7 @@ ui <- fluidPage(
 
   # Header with logo and title
   div(class = "header",
-      span(class = "title-text", "Team Lookal Team"), # Title text
+      span(class = "title-text", "Team Lookal"), # Title text
       img(src = "https://nbisweden.github.io/raukr-2024/assets/logos/raukr.png", class = "logo") # Logo image
   ),
   
