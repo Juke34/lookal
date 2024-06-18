@@ -1,0 +1,138 @@
+#
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    https://shiny.posit.co/
+#
+
+library(shiny)
+library(leaflet)
+library(pdftools)
+library(jsonlite) # Needed for parsing JSON
+library(sf) # Needed for reading GeoJSON data
+
+# Define UI for application
+ui <- fluidPage(
+  
+  # Custom CSS to centralize and style inputs
+  tags$head(
+    tags$style(HTML("
+      .center-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        min-height: 60vh; /* Adjust the height for better vertical centering */
+      }
+      .wide-input {
+        width: 80%; /* Adjust the width as needed */
+        max-width: 600px; /* Max width to control size on large screens */
+        margin-top: 10px;
+      }
+      .submit-button {
+        margin-top: 20px;
+      }
+      #map {
+        height: 600px; /* Height of the map */
+        margin-top: 20px; /* Margin to push the map below the inputs */
+      }
+    "))
+  ),
+  
+  # Application title
+  titlePanel("Text or PDF Uploader with World Map Background"),
+  
+  # Centralized layout for inputs
+  fluidRow(
+    column(12,
+           div(class = "center-content",
+               # Input: Select between text and PDF
+               div(style = "width: 80%; max-width: 600px; margin-top: 10px;",
+                   selectInput("input_type", "Choose Input Type:", 
+                               choices = c("Text" = "text", "PDF" = "pdf"),
+                               selected = "text")
+               ),
+               
+               # Conditional input: Text area for text input
+               conditionalPanel(
+                 condition = "input.input_type == 'text'",
+                 div(style = "width: 80%; max-width: 600px; margin-top: 10px;",
+                     textAreaInput("text", "Enter text:", "", rows = 5)
+                 )
+               ),
+               
+               # Conditional input: File upload for PDF
+               conditionalPanel(
+                 condition = "input.input_type == 'pdf'",
+                 div(style = "width: 80%; max-width: 600px; margin-top: 10px;",
+                     fileInput("pdf", "Upload a PDF file:", accept = c(".pdf"))
+                 )
+               ),
+               
+               # Action button to submit the input
+               div(class = "submit-button",
+                   actionButton("submit", "Submit")
+               )
+           )
+    )
+  ),
+  
+  # Map panel to display the map
+  fluidRow(
+    column(12,
+           leafletOutput("map", height = "600px") # Adjust the height as needed
+    )
+  ),
+  
+  # Output panel to display text results below the map
+  fluidRow(
+    column(12,
+           h3("Output:"),
+           textOutput("displayText")
+    )
+  )
+)
+
+# Define server logic
+server <- function(input, output, session) {
+  
+  # Reactive value to store the uploaded or entered text
+  reactiveText <- reactiveVal("")
+  
+  # Observe the submit button
+  observeEvent(input$submit, {
+    if (input$input_type == "pdf" && !is.null(input$pdf)) {
+      # Read the uploaded PDF
+      pdf_text <- pdf_text(input$pdf$datapath)
+      # Update reactiveText with the content of the PDF
+      reactiveText(paste(pdf_text, collapse = "\n"))
+    } else if (input$input_type == "text") {
+      # Update reactiveText with the entered text
+      reactiveText(input$text)
+    } else {
+      reactiveText("No input provided.")
+    }
+  })
+  
+  # Output the processed text
+  output$displayText <- renderText({
+    reactiveText()
+  })
+  
+  # Load GeoJSON data from URL
+  geojson_url <- "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
+  geojson_data <- st_read(geojson_url) # Read GeoJSON directly from the URL
+  
+  # Render the map with the GeoJSON data
+  output$map <- renderLeaflet({
+    leaflet() %>%
+      addTiles() %>%
+      addPolygons(data = geojson_data, fill = TRUE, fillColor = "blue", color = "white")
+  })
+  
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
