@@ -13,6 +13,7 @@ library(leaflet)
 library(jsonlite)
 library(sf)
 library(DT)
+library(dplyr)
 
 source("process_input.R")
 
@@ -135,7 +136,7 @@ server <- function(input, output) {
   reactiveText <- reactiveVal("")
   
   # Observe the submit button
-  observeEvent(input$submit, {
+  evr <- eventReactive(input$submit, {
     if (input$input_type == "pdf" && !is.null(input$pdf)) {
       # Read the uploaded PDF
       pdf_text <- pdf_text(input$pdf$datapath)
@@ -144,26 +145,64 @@ server <- function(input, output) {
     } else if (input$input_type == "text") {
       # Update reactiveText with the entered text
       reactiveText(input$text)
+      sample_df <-process_text(reactiveText())
+      world_sf %>% 
+        merge(sample_df, by = "NAME", all.x = T) %>% 
+        mutate(count = replace(count, is.na(count), 0)) -> world_sf
     } else {
       reactiveText("No input provided.")
     }
   })
   
   # Output the processed text
-  output$displayText <- renderPrint({
-    process_text(reactiveText())
-  })
+  #output$displayText <- renderLeaflet({
+    # sample_df <-process_text(reactiveText())
+     #world_sf %>% 
+     #merge(sample_df, by = "NAME", all.x = T) %>% 
+     #mutate(count = replace(count, is.na(count), 0)) -> output$map
+  #})
   
-  # Load GeoJSON data from URL
-  geojson_url <- "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
-  geojson_data <- st_read(geojson_url) # Read GeoJSON directly from the URL
-  
-  
-  # Render the map with the GeoJSON data
+
+  # Render Leaflet
   output$map <- renderLeaflet({
-    leaflet() %>%
-      addTiles() %>%
-      addPolygons(data = geojson_data, fill = TRUE, fillColor = "red", color = "white")
+
+    
+    mybins <- c(0, 10, 20, 50, 100, 500, Inf)
+    mypalette <- colorBin(
+      palette = "Blues", domain = world_sf$Count,
+      na.color = "transparent", bins = mybins
+    )
+    
+    # Prepare tooltips text
+    mytext <- paste(
+      "Country: ", new$NAME, "<br/>",
+      "Count: ", new$Count, "<br/>",
+      "ISO3: ", new$ISO3, "<br/>", 
+      sep = ""
+    ) %>%
+      lapply(htmltools::HTML)
+    
+   leaflet(world_sf) %>% 
+      addTiles() %>% 
+      setView(lat = 10, lng = 0, zoom = 2) %>%
+      addPolygons(
+        fillColor = ~ mypalette(Count),
+        stroke = TRUE,
+        fillOpacity = 0.9,
+        color = "white",
+        weight = 0.3,
+        label = mytext,
+        labelOptions = labelOptions(
+          style = list("font-weight" = "normal", padding = "3px 8px"),
+          textsize = "13px",
+          direction = "auto"
+        ),
+        group = "Polygons"  # Optional grouping
+      ) %>%
+      addLegend(
+        pal = mypalette, values = ~Count, opacity = 0.9,
+        title = "Count (M)", position = "bottomleft"
+      )
   })
   
   #Render the sample table
