@@ -71,14 +71,16 @@ country_by_languages <- read.csv(tsv_lang_file,
 colnames(country_by_languages) <- c("country", "iso", "lang")
 
 
-get_countries_by_word <- function(word, etymology, country_by_languages){
+get_countries_by_word <- function(word, et = etymology, co = country_by_languages){
   # get a vector of all the countries that map with term (portmanteau) in the etymology data table
-  country_list <- etymology[etymology$term == word, "lang"] %>% unique()
+  country_list <- et[et$term == word, "lang"] %>% unique()
   
   # select the iso based on a list of languages
-  country_by_languages %>%
+  result <- co %>%
     filter(lang %in% country_list ) %>%
     select("iso") %>% 
     unique() 
+  
+  return(result)
 }
 
