@@ -84,7 +84,7 @@ get_countries_by_word <- function(word, et = etymology, co = country_by_language
   return(result)
 }
 
-process_text <- function(sentence = "", et = etymology, co = country_by_languages){
+process_text <- function(sentence = "", et = etymology, co = country_by_languages, not_fo = TRUE){
   # function to process the input text
   # the text is cleaned
   # the cleaned text is then processed to get the countries that map with the words in the text
@@ -98,6 +98,12 @@ process_text <- function(sentence = "", et = etymology, co = country_by_language
     count(strings, name = "count") %>%
     arrange(desc(count)) %>%
     as.data.frame()
+  colnames(res) <- c("iso", "count")
   
-  return(res)
+  if(not_fo == TRUE){
+    idx <- map(var, function(x) nrow(x) < 1)
+    not_found <- names(which(map_lgl(idx, ~ .x)))
+  }
+  
+  return(res, not_found)
 }
