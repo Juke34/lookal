@@ -1,5 +1,7 @@
-# File for functions to process the input
+# --- parameters ----
+tsv_lang_file <- "data/country-by-languages.tsv"
 
+# ---- File for functions to process the input -----
 
 load_text <- function(sentence, pdf = FALSE, pdf_input){
   # function to read in pdf file or text in a string. Both are checked for whether 
@@ -29,3 +31,52 @@ clean_text <- function(sentence){
   sentence_list <- as.list(separate_sentence)
   sentence_list <- sentence_list[nchar(sentence_list) > 0]
 }
+
+
+#-------- Get ethymology data from parquet file and csv file --------
+
+##-------- Using Parquet input file ------------
+
+# 'Parquet' is a columnar storage file format. 
+# This function enables you to read Parquet files into R.
+#parquet_file <- "data/etymology.parquet"
+#etymology <- read_parquet(
+#  parquet_file,
+#  col_select = NULL,
+#  as_data_frame = TRUE,
+#  props = ParquetArrowReaderProperties$create(),
+#  mmap = TRUE
+#)
+
+## ------ Using CSV input file ------------
+
+# Get content into a data frame from CSV file
+json_file <- "data/test_etymology_10000.csv"
+etymology <- read.csv(json_file,
+                      header = TRUE, sep = ",")
+
+#-------- Get country-by-language data ------------
+
+## -----  from json file ----
+country_by_languages <- jsonlite::fromJSON("data/countries.json")
+country_by_languages <- as.data.frame(country_by_languages)
+View(country_by_languages)
+
+## -----  from tsv file ----
+country_by_languages <- read.csv(tsv_lang_file,
+                                 row.names = NULL,
+                                 header = TRUE, sep = "\t")
+colnames(country_by_languages) <- c("country", "iso", "lang")
+
+
+get_countries_by_word <- function(word, etymology, country_by_languages){
+  # get a vector of all the countries that map with term (portmanteau) in the etymology data table
+  country_list <- etymology[etymology$term == word, "lang"] %>% unique()
+  
+  # select the iso based on a list of languages
+  country_by_languages %>%
+    filter(lang %in% country_list ) %>%
+    select("iso") %>% 
+    unique() 
+}
+
