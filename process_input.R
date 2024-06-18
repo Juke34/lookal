@@ -84,3 +84,20 @@ get_countries_by_word <- function(word, et = etymology, co = country_by_language
   return(result)
 }
 
+process_text <- function(sentence = "", et = etymology, co = country_by_languages){
+  # function to process the input text
+  # the text is cleaned
+  # the cleaned text is then processed to get the countries that map with the words in the text
+  # the countries are then returned as a list
+  loaded_text <- load_text(sentence)
+  cleaned_text <- clean_text(loaded_text)
+  var <- map(cleaned_text, get_countries_by_word)
+  var_bin <- list_c(var)
+  
+  res <- tibble(strings = unlist(var_bin)) %>%
+    count(strings, name = "count") %>%
+    arrange(desc(count)) %>%
+    as.data.frame()
+  
+  return(res)
+}
