@@ -19,43 +19,74 @@ ui <- fluidPage(
   # Custom CSS to centralize and make inputs bigger
   tags$head(
     tags$style(HTML("
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 0;
+        background-color: #f8f9fa; /* Light background for the header */
+        border-bottom: 1px solid #e0e0e0; /* Optional: Add a subtle border below the header */
+        margin-bottom: 20px; /* Space below the header */
+      }
+      
+      .logo {
+        height: 50px; /* Adjust the logo size */
+        margin-left: auto; /* Space between the logo and the title */
+      }
+      
       .center-content {
         display: flex;
         justify-content: center;
         align-items: center;
         flex-direction: column;
-        min-height: 60vh; /* Adjust the height for better vertical centering */
+        min-height: 60vh;
       }
       .wide-input {
-        width: 80%; /* Adjust the width as needed */
-        max-width: 600px; /* Max width to control size on large screens */
+        width: 80%;
+        max-width: 600px;
         margin-top: 10px;
       }
       .submit-button {
         margin-top: 20px;
       }
       #map {
-        height: 600px; /* Height of the map */
-        margin-top: 20px; /* Margin to push the map below the inputs */
+        height: 600px;
+        margin-top: 20px;
       }
+
+      
     "))
   ),
   # Application title
-  titlePanel("Team Lookal"),
+  #titlePanel("Team Lookal"),
   
+  # Header with logo and title
+  div(class = "header",
+      span(class = "title-text", "Team Lookal"), # Title text
+      img(src = "https://nbisweden.github.io/raukr-2024/assets/logos/raukr.png", class = "logo") # Logo image
+      
+  ),
 
   # Centralized layout for inputs
   fluidRow(
     column(12,
            div(class = "center-content",
-               # Input: Select between text and PDF
+              
+               # Text for project description
+                div(style = "max-width: 600px; margin: auto; text-align: justify;",
+                    p("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")
+                ),
+           
+               # Select between text and PDF
                div(style = "width: 200%; max-width: 300px; margin-top: 10px;",
                    selectInput("input_type", "Choose Input Type:", 
                                choices = c("Text" = "text", "PDF" = "pdf"),
                                selected = "text")
                ),
                
-               # Conditional input: Text area for text input
+               
+              
+               # Text area for text input
                conditionalPanel(
                  condition = "input.input_type == 'text'",
                  div(style = "width: 150%; max-width: 600px; margin-top: 10px;",
@@ -63,7 +94,7 @@ ui <- fluidPage(
                  )
                ),
                
-               # Conditional input: File upload for PDF
+               # File upload for PDF
                conditionalPanel(
                  condition = "input.input_type == 'pdf'",
                  div(style = "width: 80%; max-width: 600px; margin-top: 10px;",
@@ -71,7 +102,7 @@ ui <- fluidPage(
                  )
                ),
                
-               # Action button to submit the input
+               # Button to submit the input
                div(class = "submit-button",
                    actionButton("submit", "Submit")
                )
@@ -82,7 +113,7 @@ ui <- fluidPage(
   # Map panel to display the map
   fluidRow(
     column(12,
-           leafletOutput("map", height = "600px") # Adjust the height as needed
+           leafletOutput("map", height = "300px") # Adjust the height as needed
     )
   ),
   
