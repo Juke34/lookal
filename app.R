@@ -43,6 +43,13 @@ ui <- fluidPage(
         border-bottom: 1px solid #e0e0e0; 
         margin-bottom: 20px; 
       }
+      .footer {
+        text-align: center;
+        margin-top: 20px;
+        color: #6c757d;
+        font-size: 10px; /* Adjust font size here */
+        line-height: 1.2; /* Adjust line height if needed */
+      }
       
       .logo {
         height: 50px;
@@ -177,6 +184,10 @@ ui <- fluidPage(
               
     )
     ),
+    # Footer section
+    div(class = "footer",
+        p("© 2024 Team Lookal. Authors: Ine Bonthius, Jacques Dainat, Tobias Fietze")
+    )
   )
 )
 )
@@ -193,8 +204,6 @@ server <- function(input, output, session) {
   # Reactive value to store the user input
   user_input <- reactiveVal("")
   
-  # Define a reactive value for sankey_plot
-  sankey_plot <- reactiveVal(NULL)
 
   # Observe the submit button
   observeEvent(input$submit, {
@@ -210,6 +219,7 @@ server <- function(input, output, session) {
     
     # Store user input to be displayed
     user_input(text_to_process)
+    
 
     #More than 0 character and it process the text with process_text() function
     if (nchar(text_to_process) > 0) {
