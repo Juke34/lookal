@@ -16,6 +16,7 @@ library(DT)
 library(dplyr)
 library(stringr)
 library(purrr)
+library(arrow)
 
 source("process_input.R")
 
@@ -73,6 +74,22 @@ ui <- fluidPage(
 
     "))
   ),
+  
+  # Include custom JavaScript to limit input size
+  tags$head(
+    tags$script('
+      $(document).on("shiny:connected", function() {
+        var maxLength = 400; // Max character length
+        $("#text").attr("maxlength", maxLength); // Set maxlength attribute
+        
+        $("#text).on("input", function() {
+          if (this.value.length > maxLength) {
+            this.value = this.value.slice(0, maxLength); // Trim input if too long
+          }
+        });
+      });
+    ')
+  ),  
   
   # Header with logo and title
   div(class = "header",
