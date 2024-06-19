@@ -220,22 +220,6 @@ server <- function(input, output, session) {
     # Store user input to be displayed
     user_input(text_to_process)
     
-    # Function to check PDF file size and extract text
-    extract_pdf_text <- function(pdf_file_path, max_size_mb = 1) {
-      # Check file size
-      file_info <- file.info(pdf_file_path)
-      file_size_mb <- file_info$size / 1024^2  # Convert bytes to MB
-      
-      # Check if file size exceeds the limit
-      if (file_size_mb > max_size_mb) {
-        stop("PDF file size exceeds the allowed limit of ", max_size_mb, " MB.")
-      }
-      
-      # Read PDF content
-      pdf_text <- pdftools::pdf_text(pdf_file_path)
-      return(paste(pdf_text, collapse = "\n"))
-    }
-    
 
     #More than 0 character and it process the text with process_text() function
     if (nchar(text_to_process) > 0) {
