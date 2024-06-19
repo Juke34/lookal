@@ -14,23 +14,8 @@ library(jsonlite)
 library(sf)
 library(DT)
 library(dplyr)
-
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    https://shiny.posit.co/
-#
-
-library(shiny)
-library(pdftools)
-library(leaflet)
-library(jsonlite)
-library(sf)
-library(DT)
-library(dplyr)
+library(stringr)
+library(purrr)
 
 source("process_input.R")
 
@@ -136,103 +121,83 @@ ui <- fluidPage(
                   h3("Output:"),
                   textOutput("displayText"),
                   
-              
+                  
                   # Data frame output
                   h3("Your text is mainly connected to the following languages:"),
                   DT::dataTableOutput("data_table")  # Placeholder for the data table
-                
+                  
               )
     )
   )
 )
 
 
-
 # Define server logic
 server <- function(input, output) {
-  
-  # Reactive value to store the uploaded or entered text
-  reactiveText <- reactiveVal("")
+  # Reactive value to store the processed text data
+  reactive_text <- reactiveVal(data.frame())
   
   # Observe the submit button
-  evr <- eventReactive(input$submit, {
+  observeEvent(input$submit, {
     if (input$input_type == "pdf" && !is.null(input$pdf)) {
-      # Read the uploaded PDF
       pdf_text <- pdf_text(input$pdf$datapath)
-      # Update reactiveText with the content of the PDF
-      reactiveText(paste(pdf_text, collapse = "\n"))
+      text_to_process <- paste(pdf_text, collapse = "\n")
     } else if (input$input_type == "text") {
-      # Update reactiveText with the entered text
-      reactiveText(input$text)
-      sample_df <-process_text(reactiveText())
-      world_sf %>% 
-        merge(sample_df, by = "NAME", all.x = T) %>% 
-        mutate(count = replace(count, is.na(count), 0)) -> world_sf
-    } else {
-      reactiveText("No input provided.")
+      text_to_process <- input$text
+      #Checks if string is empty
+    } else { 
+      text_to_process <- "No input provided."
+    }
+    
+    #More than 0 character and it process the text with process_text() function
+    if (nchar(text_to_process) > 0) {
+      result <- process_text(text_to_process)
+      reactive_text(result)
+      
+      # Update the map
+      updated_sf <- world_sf %>% left_join(result, by = "ISO3")
+      #updated_sf$Count <- coalesce(updated_sf$count, 0)
+      updated_sf <- updated_sf %>%
+        mutate(Count = replace(count, is.na(count), 0))
+      #updated_sf$Count <- mutate(Count = replace(count, is.na(count), 0))
+      
+      output$map <- renderLeaflet({
+        mybins <- c(0, 1, 2, 5, 10, 20, 50, Inf)
+        mypalette <- colorBin(palette = "Blues", domain = updated_sf$Count, na.color = "transparent", bins = mybins)
+        
+        mytext <- paste(
+          "Country: ", updated_sf$NAME, "<br/>",
+          "Count: ", updated_sf$Count, "<br/>",
+          "ISO3: ", updated_sf$ISO3, "<br/>",
+          sep = ""
+        ) %>% lapply(htmltools::HTML)
+        
+        leaflet(updated_sf) %>% 
+          addTiles() %>% 
+          setView(lat = 10, lng = 0, zoom = 2) %>%
+          addPolygons(
+            fillColor = ~mypalette(Count),
+            stroke = TRUE,
+            fillOpacity = 0.9,
+            color = "white",
+            weight = 0.3,
+            label = mytext,
+            labelOptions = labelOptions(
+              style = list("font-weight" = "normal", padding = "3px 8px"),
+              textsize = "13px",
+              direction = "auto"
+            )
+          ) %>%
+          addLegend(pal = mypalette, values = ~Count, opacity = 0.9, title = "Count", position = "bottomleft")
+      })
+      
+      # Update the data table
+      output$data_table <- DT::renderDataTable({
+        datatable(reactive_text(), options = list(pageLength = 5, autoWidth = TRUE))
+      })
     }
   })
-  
-  # Output the processed text
-  #output$displayText <- renderLeaflet({
-  # sample_df <-process_text(reactiveText())
-  #world_sf %>% 
-  #merge(sample_df, by = "NAME", all.x = T) %>% 
-  #mutate(count = replace(count, is.na(count), 0)) -> output$map
-  #})
-  
-  
-  # Render Leaflet
-  output$map <- renderLeaflet({
-    
-    
-    mybins <- c(0, 10, 20, 50, 100, 500, Inf)
-    mypalette <- colorBin(
-      palette = "Blues", domain = world_sf$Count,
-      na.color = "transparent", bins = mybins
-    )
-    
-    # Prepare tooltips text
-    mytext <- paste(
-      "Country: ", new$NAME, "<br/>",
-      "Count: ", new$Count, "<br/>",
-      "ISO3: ", new$ISO3, "<br/>", 
-      sep = ""
-    ) %>%
-      lapply(htmltools::HTML)
-    
-    leaflet(world_sf) %>% 
-      addTiles() %>% 
-      setView(lat = 10, lng = 0, zoom = 2) %>%
-      addPolygons(
-        fillColor = ~ mypalette(Count),
-        stroke = TRUE,
-        fillOpacity = 0.9,
-        color = "white",
-        weight = 0.3,
-        label = mytext,
-        labelOptions = labelOptions(
-          style = list("font-weight" = "normal", padding = "3px 8px"),
-          textsize = "13px",
-          direction = "auto"
-        ),
-        group = "Polygons"  # Optional grouping
-      ) %>%
-      addLegend(
-        pal = mypalette, values = ~Count, opacity = 0.9,
-        title = "Count (M)", position = "bottomleft"
-      )
-  })
-  
-  #Render the sample table
-  output$data_table <- DT::renderDataTable({
-    datatable(sample_df, options = list(pageLength = 5, autoWidth = TRUE))
-  })
-  
 }
 
-# Run the application 
+# Run the application
 shinyApp(ui = ui, server = server)
-
-
-
