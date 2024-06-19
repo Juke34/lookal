@@ -137,7 +137,7 @@ get_languages_nodes_by_word <- function(word, et = etymology){
 # create two data frames and return both into a single list.
 # first dataframe is called nodes
 # second dataset is called links
-all_lang_by_words <- function(sentence,  et = etymology, lng = languages_nodes){
+all_lang_by_words <- function(sentence,  et = etymology){
   loaded_text <- load_text(sentence)
   cleaned_text <- clean_text(loaded_text)
   list_langs <- map(cleaned_text, get_languages_nodes_by_word)
@@ -169,5 +169,20 @@ all_lang_by_words <- function(sentence,  et = etymology, lng = languages_nodes){
   names(df_list) <- c("links", "nodes")
   
   return(df_list)
+}
+
+# Return a sankey plot 
+get_sankey_plot <- function(sentence,  et = etymology){
+  df_list <- all_lang_by_words(sentence, et)
+  p <- sankeyNetwork(Links = df_list$links, 
+                   Nodes = df_list$nodes, 
+                   Source = "lang",
+                   Target = "related_lang", 
+                   Value = "count", 
+                   NodeID = "language_level",
+                   #    units = "counted", 
+                   fontSize = 12, 
+                   nodeWidth = 30)
+  return(p)
 }
 
