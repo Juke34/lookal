@@ -13,6 +13,9 @@ library(leaflet)
 library(jsonlite)
 library(sf)
 library(DT)
+library(dplyr)
+library(stringr)
+library(purrr)
 
 source("process_input.R")
 
