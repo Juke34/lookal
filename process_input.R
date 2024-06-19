@@ -70,7 +70,7 @@ etymology <- read.csv(csv_etymology_file,
 country_by_languages <- read.csv(tsv_lang_file,
                                  row.names = NULL,
                                  header = TRUE, sep = "\t")
-colnames(country_by_languages) <- c("country", "iso", "lang")
+colnames(country_by_languages) <- c("country", "ISO3", "lang")
 
 
 get_countries_by_word <- function(word, et = etymology, co = country_by_languages){
@@ -80,7 +80,7 @@ get_countries_by_word <- function(word, et = etymology, co = country_by_language
   # select the iso based on a list of languages
   result <- co %>%
     filter(lang %in% country_list ) %>%
-    select("iso") %>% 
+    select("ISO3") %>% 
     unique() 
   
   return(result)
@@ -101,8 +101,9 @@ process_text <- function(sentence = "", et = etymology, co = country_by_language
     count(strings, name = "count") %>%
     arrange(desc(count)) %>%
     as.data.frame()
-  colnames(res) <- c("iso", "count")
+  colnames(res) <- c("ISO3", "count")
   
+  # keep track of words that do not match any country name 
   if(not_fo == TRUE){
     idx <- map(var, function(x) nrow(x) < 1)
     not_found <- names(which(map_lgl(idx, ~ .x)))
@@ -111,3 +112,7 @@ process_text <- function(sentence = "", et = etymology, co = country_by_language
   return(res)
  # return(not_found)
 }
+
+
+world_sf <- read_sf("data/world_shape/TM_WORLD_BORDERS_SIMPL-0.3.shp")
+world_sf <- world_sf %>%  mutate(Count = 0)
