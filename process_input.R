@@ -3,9 +3,46 @@
 tsv_lang_file <- "data/country-by-languages.tsv"
 # json_lang_file <- "data/countries.json"
 ## --- etymology file ---
-csv_etymology_file <- "data/test_etymology_10000.csv"
-#parquet_etymology_file <- "data/etymology.parquet"
+#csv_etymology_file <- "data/test_etymology_10000.csv"
+parquet_etymology_file <- "data/etymology.parquet"
                     
+#-------- Get ethymology data from parquet file and csv file --------
+
+##-------- Using Parquet input file ------------
+
+# 'Parquet' is a columnar storage file format. 
+# This function enables you to read Parquet files into R.
+etymology <- arrow::read_parquet(
+  parquet_etymology_file,
+  col_select = NULL,
+  as_data_frame = TRUE,
+  props = ParquetArrowReaderProperties$create(),
+  mmap = TRUE
+)
+# split etymology huge data.frame into a list of smaller data.frames
+etymology_chuncks <- split(etymology, seq(nrow(etymology)) %/% 100000) # 1000 000 rows per data
+
+
+## ------ Using CSV input file ------------
+
+# Get content into a data frame from CSV file
+#etymology <- read.csv(csv_etymology_file,
+#                      header = TRUE, sep = ",")
+
+#-------- Get country-by-language data ------------
+
+## -----  from json file ----
+#country_by_languages <- jsonlite::fromJSON(json_lang_file)
+#country_by_languages <- as.data.frame(country_by_languages)
+
+## -----  from tsv file ----
+country_by_languages <- read.csv(tsv_lang_file,
+                                 row.names = NULL,
+                                 header = TRUE, sep = "\t")
+colnames(country_by_languages) <- c("country", "ISO3", "lang")
+
+
+# ------------------------ Functions ------------------------ 
 
 # ---- File for functions to process the input -----
 
@@ -26,7 +63,6 @@ load_text <- function(sentence, pdf = FALSE, pdf_input){
   return(sentence)
 }
 
-
 clean_text <- function(sentence){
   # this function removes all punctuation and digits, to be left with the words.
   # strings are split by space
@@ -41,53 +77,31 @@ clean_text <- function(sentence){
 }
 
 
-#-------- Get ethymology data from parquet file and csv file --------
 
-##-------- Using Parquet input file ------------
-
-# 'Parquet' is a columnar storage file format. 
-# This function enables you to read Parquet files into R.
-#etymology <- arrow::read_parquet(
-#  parquet_etymology_file,
-#  col_select = NULL,
-#  as_data_frame = TRUE,
-#  props = ParquetArrowReaderProperties$create(),
-#  mmap = TRUE
-#)
-
-## ------ Using CSV input file ------------
-
-# Get content into a data frame from CSV file
-etymology <- read.csv(csv_etymology_file,
-                      header = TRUE, sep = ",")
-
-#-------- Get country-by-language data ------------
-
-## -----  from json file ----
-#country_by_languages <- jsonlite::fromJSON(json_lang_file)
-#country_by_languages <- as.data.frame(country_by_languages)
-
-## -----  from tsv file ----
-country_by_languages <- read.csv(tsv_lang_file,
-                                 row.names = NULL,
-                                 header = TRUE, sep = "\t")
-colnames(country_by_languages) <- c("country", "ISO3", "lang")
-
-
-get_countries_by_word <- function(word, et = etymology, co = country_by_languages){
+get_countries_by_word <- function( et, wo , co = country_by_languages){
   # get a vector of all the countries that map with term (portmanteau) in the etymology data table
-  country_list <- et[et$term == word, "lang"] %>% unique()
+  country_tibble <- et %>% filter(term %in% wo) %>% select("lang")
   
   # select the iso based on a list of languages
-  result <- co %>%
-    filter(lang %in% country_list ) %>%
-    select("ISO3") %>% 
-    unique() 
+  result <-  co %>%
+             filter(lang %in% country_tibble$lang ) %>%
+             select("ISO3") %>% 
+             unique() 
   
   return(result)
 }
 
 
+
+
+# as get_countries_by_word but with a nested map allowing to take as input two lists
+# to test: get_countries_by_word_parallel(etymology_chuncks, list("encyclopedia", "portmanteau", "Laz", "Yoruba"))
+get_countries_by_word_parallel <- function(etymology_list, word_list ){
+  
+  result <- etymology_list %>% map(function(x) get_countries_by_word(x, word_list))
+  result <- list_rbind(result)
+  return(result)
+}
 
 process_text <- function(sentence = "", et = etymology, co = country_by_languages, not_fo = TRUE){
   # function to process the input text
@@ -95,11 +109,8 @@ process_text <- function(sentence = "", et = etymology, co = country_by_language
   # the cleaned text is then processed to get the countries that map with the words in the text
   # the countries are then returned as a list
   # now it only returns the results
-  sentence %>%
-    load_text() %>%
-    clean_text() %>%
-    future_map(get_countries_by_word) -> var
-    var_bin <- list_c(var)
+  word_list <-  sentence %>% load_text() %>% clean_text()
+  var_bin <- get_countries_by_word_parallel(etymology_chuncks, word_list)
   
   res <- tibble(strings = unlist(var_bin)) %>%
     count(strings, name = "count") %>%
@@ -108,10 +119,10 @@ process_text <- function(sentence = "", et = etymology, co = country_by_language
   colnames(res) <- c("ISO3", "count")
   
   # keep track of words that do not match any country name 
-  if(not_fo == TRUE){
-    idx <- map(var, function(x) nrow(x) < 1)
-    not_found <- names(which(map_lgl(idx, ~ .x)))
-  }
+  #if(not_fo == TRUE){
+  #  idx <- map(var, function(x) nrow(x) < 1)
+  #  not_found <- names(which(map_lgl(idx, ~ .x)))
+  #}
   
   return(res)
  # return(not_found)
