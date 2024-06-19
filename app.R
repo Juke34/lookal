@@ -186,7 +186,7 @@ ui <- fluidPage(
     ),
     # Footer section
     div(class = "footer",
-        p("© 2024 Team Lookal. (Authors: Ine Bonthius, Jacques Dainat, Tobias Fietze)")
+        p("© 2024 Team Lookal. Authors: Ine Bonthius, Jacques Dainat, Tobias Fietze")
     )
   )
 )
