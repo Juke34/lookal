@@ -117,3 +117,57 @@ process_text <- function(sentence = "", et = etymology, co = country_by_language
 
 world_sf <- read_sf("data/world_shape/TM_WORLD_BORDERS_SIMPL-0.3.shp")
 world_sf <- world_sf %>%  mutate(Count = 0)
+
+
+
+# -------- For Sankey plot -----
+
+get_languages_nodes_by_word <- function(word, et = etymology){
+  
+  # select the langs based on a list of languages_nodes
+  result <- et %>%
+    filter(term == word) %>%
+    filter(reltype == "inherited_from") %>%
+    select("lang", "related_lang")
+  
+  return(result)
+}
+
+
+# create two data frames and return both into a single list.
+# first dataframe is called nodes
+# second dataset is called links
+all_lang_by_words <- function(sentence,  et = etymology, lng = languages_nodes){
+  loaded_text <- load_text(sentence)
+  cleaned_text <- clean_text(loaded_text)
+  list_langs <- map(cleaned_text, get_languages_nodes_by_word)
+  # bind list of df together
+  var_bin <- list_rbind(list_langs)
+  # Group by the two columns and count occurrences
+  var_bin <- var_bin %>% 
+    group_by(lang, related_lang) %>%  
+    summarise(count = n(), .groups = 'drop')
+  
+  # create index of country 
+  language_level <- c(unique(var_bin$lang), unique(var_bin$related_lang))
+  languages_nodes <- as.data.frame(language_level)
+  languages_nodes$number <- rownames(languages_nodes)
+  
+  
+  # Merge with languages_nodes dataframe that has a unique number per language
+  lang_merge <- merge(var_bin, languages_nodes, by.x = "lang", by.y = "language_level")
+  colnames(lang_merge) <- c("lang1", "related_lang1", "count", "lang")
+  related_lang_merge <- merge(lang_merge, languages_nodes, by.x = "related_lang1", by.y = "language_level")
+  colnames(related_lang_merge) <- c("lang1", "related_lang1", "count", "lang", "related_lang")
+  just_numbers <- related_lang_merge[, 3:5]
+  just_numbers$lang <- as.integer(just_numbers$lang)
+  just_numbers$related_lang <- as.integer(just_numbers$related_lang)
+  just_numbers$lang <- just_numbers$lang - 1
+  just_numbers$related_lang <- just_numbers$related_lang - 1
+  
+  df_list <- list(just_numbers, languages_nodes)
+  names(df_list) <- c("links", "nodes")
+  
+  return(df_list)
+}
+
