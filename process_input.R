@@ -23,6 +23,7 @@ load_text <- function(sentence, pdf = FALSE, pdf_input){
     }
     sentence <- updated_string
   }
+  return(sentence)
 }
 
 
@@ -85,6 +86,8 @@ get_countries_by_word <- function(word, et = etymology, co = country_by_language
   
   return(result)
 }
+
+
 
 process_text <- function(sentence = "", et = etymology, co = country_by_languages, not_fo = TRUE){
   # function to process the input text
