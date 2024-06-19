@@ -23,7 +23,6 @@ load_text <- function(sentence, pdf = FALSE, pdf_input){
     }
     sentence <- updated_string
   }
-  sentence
 }
 
 
@@ -93,10 +92,11 @@ process_text <- function(sentence = "", et = etymology, co = country_by_language
   # the cleaned text is then processed to get the countries that map with the words in the text
   # the countries are then returned as a list
   # now it only returns the results
-  loaded_text <- load_text(sentence)
-  cleaned_text <- clean_text(loaded_text)
-  var <- map(cleaned_text, get_countries_by_word)
-  var_bin <- list_c(var)
+  sentence %>%
+    load_text() %>%
+    clean_text() %>%
+    future_map(get_countries_by_word) -> var
+    var_bin <- list_c(var)
   
   res <- tibble(strings = unlist(var_bin)) %>%
     count(strings, name = "count") %>%
