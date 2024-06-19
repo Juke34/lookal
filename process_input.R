@@ -91,6 +91,14 @@ get_countries_by_word <- function( et, wo , co = country_by_languages){
   return(result)
 }
 
+# as get_countries_by_word but with a nested map allowing to take as input two lists
+# to test: get_countries_by_word_parallel(etymology_chuncks, list("encyclopedia", "portmanteau", "Laz", "Yoruba"))
+get_countries_by_word_middle <- function(etymology_list, word_list ){
+  
+  result <- word_list %>% map(function(x) get_countries_by_word(etymology_list, x))
+  result <- list_rbind(result)
+  return(result)
+}
 
 
 
@@ -98,9 +106,9 @@ get_countries_by_word <- function( et, wo , co = country_by_languages){
 # to test: get_countries_by_word_parallel(etymology_chuncks, list("encyclopedia", "portmanteau", "Laz", "Yoruba"))
 get_countries_by_word_parallel <- function(etymology_list, word_list ){
   
-  result <- etymology_list %>% map(function(x) get_countries_by_word(x, word_list))
-  result <- list_rbind(result)
-  return(result)
+    result <- etymology_list %>% map(function(x) get_countries_by_word_middle(x, word_list))
+    result <- list_rbind(result)
+    return(result)
 }
 
 process_text <- function(sentence = "", et = etymology, co = country_by_languages, not_fo = TRUE){
