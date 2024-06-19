@@ -74,23 +74,7 @@ ui <- fluidPage(
 
     "))
   ),
-  
-  # Include custom JavaScript to limit input size
-  tags$head(
-    tags$script('
-      $(document).on("shiny:connected", function() {
-        var maxLength = 400; // Max character length
-        $("#text").attr("maxlength", maxLength); // Set maxlength attribute
-        
-        $("#text).on("input", function() {
-          if (this.value.length > maxLength) {
-            this.value = this.value.slice(0, maxLength); // Trim input if too long
-          }
-        });
-      });
-    ')
-  ),  
-  
+
   # Header with logo and title
   div(class = "header",
       span(class = "title-text", "Team Lookal"), # Title text
@@ -152,8 +136,8 @@ ui <- fluidPage(
                            textOutput("user_input"),
                            
                            # Processed text output (if applicable)
-                           h3("Output:"),
-                           textOutput("reactive_text"),
+                           #h3("Output:"),
+                           #textOutput("reactive_text"),
                            
                            textOutput("display_text"),
                            
@@ -162,7 +146,11 @@ ui <- fluidPage(
                            DT::dataTableOutput("data_table"), # Placeholder for the data table
                            
                            #Download Button
-                           downloadButton("button_download","Download")
+                           downloadButton("button_download","Download"),
+                           
+                           h3("Output: New:"),
+                           textOutput("selected_lang")
+                           
                        )
                 )
               )
@@ -173,12 +161,14 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
+  options(shiny.maxRequestSize = 800*1024^2)
+  
   # Reactive value to store the processed text, empty from start
   reactive_text <- reactiveVal("")
-  
+
   # Reactive value to store the user input
   user_input <- reactiveVal("")
-  
+
   # Observe the submit button
   observeEvent(input$submit, {
     if (input$input_type == "pdf" && !is.null(input$pdf)) {
@@ -191,6 +181,9 @@ server <- function(input, output) {
       text_to_process <- "No input provided."
     }
     
+    # Store user input to be displayed
+    user_input(text_to_process)
+
     #More than 0 character and it process the text with process_text() function
     if (nchar(text_to_process) > 0) {
       result <- process_text(text_to_process)
@@ -240,9 +233,10 @@ server <- function(input, output) {
       })
       
       #Output from user's input
-      output$userInputText <- renderText({
-        reactive_text()
+      output$user_input <- renderText({
+        user_input()
       })
+
       
       #Output Button for Download
       output$button_download <- downloadHandler(
@@ -252,6 +246,19 @@ server <- function(input, output) {
         content = function(file) {
           write.csv(result,file,row.names=FALSE,quote=F)
         })
+      
+      
+      output$test <- renderText({
+        # The line of code to filter the data frame
+        selected_lang <- etymology[etymology$term == input$term_input, "lang"]
+        
+        # Return the result as text
+        if (length(selected_lang) == 0) {
+          "Term not found"
+        } else {
+          paste("The language for the term '", input$term_input, "' is: ", selected_lang, sep = "")
+        }
+      })
     }
   })
 }
