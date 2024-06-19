@@ -17,8 +17,15 @@ library(dplyr)
 library(stringr)
 library(purrr)
 library(arrow)
+library(furrr)
+library(networkD3)
+library(shinycssloaders)
+
+# Increase the future.globals.maxSize limit
+#options(future.globals.maxSize = 1024 * 1024 * 1024)  # Set limit to 1 GB
 
 source("process_input.R")
+
 
 
 # Define UI for application
@@ -87,15 +94,17 @@ ui <- fluidPage(
                  # Placeholder for sidebar content
                  p("This is the sidebar content: ....")
     ),
-    
+  
     # Main panel for the primary content
     mainPanel(width = 9,
+              tabsetPanel(
+                tabPanel("Input Data",
               fluidPage(
                 column(width = 12,
                        div(style = "max-width: 2000px; margin: auto;",
                            # Text for project description
                            div(style = "text-align: justify; margin-bottom: 20px;",
-                               p("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")
+                               p("Welcome to Lookal, an interactive Shiny application designed to transform your textual input into insightful visualizations. This app offers a comprehensive platform to analyze and explore connections within your text through various dynamic visual tools.")
                            ),
                            
                            # Select between text and PDF
@@ -128,9 +137,7 @@ ui <- fluidPage(
                                actionButton("submit", "Submit")
                            ),
                            
-                           # Map output
-                           leafletOutput("map"),
-                           
+                          
                            # Text output for user's raw input
                            h3("Your Input:"),
                            textOutput("user_input"),
@@ -141,33 +148,53 @@ ui <- fluidPage(
                            
                            textOutput("display_text"),
                            
-                           # Data frame output
-                           h5("Your text is mainly connected to the following countries:"),
-                           DT::dataTableOutput("data_table"), # Placeholder for the data table
+
                            
-                           #Download Button
-                           downloadButton("button_download","Download"),
-                           
-                           h3("Output: New:"),
-                           textOutput("selected_lang")
-                           
-                       )
-                )
+                      )
               )
+            )),
+          
+    
+    tabPanel("Output World Map",
+             # Map output
+             leafletOutput("map") %>% withSpinner(type = 1, color = "#0dc5c1", size = 1.5),
+             
+             # Data frame output
+             h5("Your text is mainly connected to the following countries:"),
+             DT::dataTableOutput("data_table"), # Placeholder for the data table
+             
+             #Download Button
+             downloadButton("button_download","Download Table"),
+    ),
+    
+    tabPanel("Sankey Plot",
+            fluidPage(
+               # Sankey plot output
+               h3("Language Connections Sankey Plot"),
+               sankeyNetworkOutput("sankey_plot") %>% withSpinner(type = 1, color = "#0dc5c1", size = 1.5),
+            ),
+            
+              
     )
+    ),
   )
+)
 )
 
 
+
 # Define server logic
-server <- function(input, output) {
-  options(shiny.maxRequestSize = 800*1024^2)
+server <- function(input, output, session) {
+  #options(shiny.maxRequestSize = 800*1024^2)
   
   # Reactive value to store the processed text, empty from start
   reactive_text <- reactiveVal("")
 
   # Reactive value to store the user input
   user_input <- reactiveVal("")
+  
+  # Define a reactive value for sankey_plot
+  sankey_plot <- reactiveVal(NULL)
 
   # Observe the submit button
   observeEvent(input$submit, {
@@ -247,18 +274,11 @@ server <- function(input, output) {
           write.csv(result,file,row.names=FALSE,quote=F)
         })
       
-      
-      output$test <- renderText({
-        # The line of code to filter the data frame
-        selected_lang <- etymology[etymology$term == input$term_input, "lang"]
-        
-        # Return the result as text
-        if (length(selected_lang) == 0) {
-          "Term not found"
-        } else {
-          paste("The language for the term '", input$term_input, "' is: ", selected_lang, sep = "")
-        }
+      output$sankey_plot <- renderSankeyNetwork({
+        sankey_plot <- get_sankey_plot(text_to_process)  # Call the function to get the Sankey plot
+        sankey_plot
       })
+      
     }
   })
 }
