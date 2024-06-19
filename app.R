@@ -15,12 +15,29 @@ library(sf)
 library(DT)
 library(dplyr)
 
+#
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    https://shiny.posit.co/
+#
+
+library(shiny)
+library(pdftools)
+library(leaflet)
+library(jsonlite)
+library(sf)
+library(DT)
+library(dplyr)
+
 source("process_input.R")
 
 
 # Define UI for application
 ui <- fluidPage(
-
+  
   # Custom CSS to centralize and make inputs bigger
   tags$head(
     tags$style(HTML("
@@ -62,7 +79,7 @@ ui <- fluidPage(
       
     "))
   ),
-
+  
   # Header with logo and title
   div(class = "header",
       span(class = "title-text", "Team Lookal"), # Title text
@@ -72,57 +89,59 @@ ui <- fluidPage(
   # Sidebar layout for potential future navigation or controls
   sidebarLayout(
     sidebarPanel(width = 3,
-      # Placeholder for sidebar content
-      p("This is the sidebar content: ....")
+                 # Placeholder for sidebar content
+                 p("This is the sidebar content: ....")
     ),
     
     # Main panel for the primary content
     mainPanel(width= 9,
-      div(style = "max-width: 800px; margin: auto;",
-          # Text for project description
-          div(style = "text-align: justify; margin-bottom: 20px;",
-              p("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")
-          ),
-          
-          # Select between text and PDF
-          div(style = "width: 200px; margin-bottom: 10px;",
-              selectInput("input_type", "Choose Input Type:", 
-                          choices = c("Text" = "text", "PDF" = "pdf"),
-                          selected = "text")
-          ),
-          
-          # Conditional panel for text input
-          conditionalPanel(
-            condition = "input.input_type == 'text'",
-            div(style = "width: 200%; max-width: 800px; margin-bottom: 10px;",
-                textAreaInput("text", "Your text:", "", rows = 3, resize = "vertical", placeholder = "Please enter your text here!")
-            )
-          ),
-          
-          # Conditional panel for PDF upload
-          conditionalPanel(
-            condition = "input.input_type == 'pdf'",
-            div(style = "width: 100%; max-width: 600px; margin-bottom: 10px;",
-                fileInput("pdf", "Upload a PDF file:", accept = c(".pdf"))
-            )
-          ),
-          
-          # Button to submit the input
-          div(class = "submit-button",
-              actionButton("submit", "Submit")
-          ),
-          
-          # Map output
-          leafletOutput("map"),
-          
-          # Text output
-          h3("Output:"),
-          textOutput("displayText"),
-          
-          # Data frame output
-          h3("Your text is mainly connected to the following languages:"),
-          DT::dataTableOutput("data_table")  # Placeholder for the data table
-      )
+              div(style = "max-width: 800px; margin: auto;",
+                  # Text for project description
+                  div(style = "text-align: justify; margin-bottom: 20px;",
+                      p("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")
+                  ),
+                  
+                  # Select between text and PDF
+                  div(style = "width: 200px; margin-bottom: 10px;",
+                      selectInput("input_type", "Choose Input Type:", 
+                                  choices = c("Text" = "text", "PDF" = "pdf"),
+                                  selected = "text")
+                  ),
+                  
+                  # Conditional panel for text input
+                  conditionalPanel(
+                    condition = "input.input_type == 'text'",
+                    div(style = "width: 200%; max-width: 800px; margin-bottom: 10px;",
+                        textAreaInput("text", "Your text:", "", rows = 3, resize = "vertical", placeholder = "Please enter your text here!")
+                    )
+                  ),
+                  
+                  # Conditional panel for PDF upload
+                  conditionalPanel(
+                    condition = "input.input_type == 'pdf'",
+                    div(style = "width: 100%; max-width: 600px; margin-bottom: 10px;",
+                        fileInput("pdf", "Upload a PDF file:", accept = c(".pdf"))
+                    )
+                  ),
+                  
+                  # Button to submit the input
+                  div(class = "submit-button",
+                      actionButton("submit", "Submit")
+                  ),
+                  
+                  # Map output
+                  leafletOutput("map"),
+                  
+                  # Text output
+                  h3("Output:"),
+                  textOutput("displayText"),
+                  
+              
+                  # Data frame output
+                  h3("Your text is mainly connected to the following languages:"),
+                  DT::dataTableOutput("data_table")  # Placeholder for the data table
+                
+              )
     )
   )
 )
@@ -156,16 +175,16 @@ server <- function(input, output) {
   
   # Output the processed text
   #output$displayText <- renderLeaflet({
-    # sample_df <-process_text(reactiveText())
-     #world_sf %>% 
-     #merge(sample_df, by = "NAME", all.x = T) %>% 
-     #mutate(count = replace(count, is.na(count), 0)) -> output$map
+  # sample_df <-process_text(reactiveText())
+  #world_sf %>% 
+  #merge(sample_df, by = "NAME", all.x = T) %>% 
+  #mutate(count = replace(count, is.na(count), 0)) -> output$map
   #})
   
-
+  
   # Render Leaflet
   output$map <- renderLeaflet({
-
+    
     
     mybins <- c(0, 10, 20, 50, 100, 500, Inf)
     mypalette <- colorBin(
@@ -182,7 +201,7 @@ server <- function(input, output) {
     ) %>%
       lapply(htmltools::HTML)
     
-   leaflet(world_sf) %>% 
+    leaflet(world_sf) %>% 
       addTiles() %>% 
       setView(lat = 10, lng = 0, zoom = 2) %>%
       addPolygons(
@@ -214,5 +233,6 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
 
 
