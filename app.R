@@ -181,7 +181,7 @@ ui <- fluidPage(
               ),
               # Footer section
               div(class = "footer",
-                  p("© 2024 Team Lookal. Authors: Ine Bonthius, Jacques Dainat, Tobias Fietze")
+                  p("© 2024 Team Lookal. Authors: Ine Bonthuis, Jacques Dainat, Tobias Fietze")
               )
      )
     )
@@ -274,7 +274,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # Observe the clear button
+  # Clear button, clear textinput, world map, sankey plot
   observeEvent(input$clear, {
     updateTextAreaInput(session, "text", value = "")
     user_input("")
